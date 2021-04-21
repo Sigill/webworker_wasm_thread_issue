@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    <input type="button" value="Worker, single tread" id="worker_single" />
+    <input type="button" value="Main thread, parallel" id="main_parallel" />
+    <input type="button" value="Worker, parallel"id="worker_parallel" />
+    <p>See messages in console</p>
+
+    <script type="text/javascript">
+      var worker = new Worker("WebWorker.js");
+      worker.onerror = function (evt) { console.error(`Error from Web Worker: ${evt.message}`); }
+      worker.onmessage = function (evt) { console.log(`Message from the Web Worker:\n\n ${evt.data}`); }
+
+      document.getElementById("worker_single").onclick = () => worker.postMessage({ "action": "expansive_function" });
+      document.getElementById("main_parallel").onclick = () => console.error("WASM module not loaded yet");
+      document.getElementById("worker_parallel").onclick = () => worker.postMessage({ "action": "parallel_sum_expansive_functions" });
+
+      var Module = {
+        onRuntimeInitialized: function() {
+          document.getElementById("main_parallel").onclick = () => {
+            let r = Module.parallel_sum_expansive_functions();
+            console.log(`Message from main thread:\n\n Parallel expansive function returned ${r}.`);
+          }
+        }
+      };
+    </script>
+    <script src="test.js"></script>
+  </body>
+</html>
